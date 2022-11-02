@@ -11,5 +11,9 @@ class Post(models.Model):
 
     # author 추후 작성 예쩡 ( 나중에 모델에서 외래키를 구현 할 때 다룰 것)
 
+# admin의 포스트 pk, title 노출
     def __str__(self):
         return f'[{self.pk}]{self.title}'
+
+    def get_absolute_url(self):
+        return f'/blog/{self.pk}/'
