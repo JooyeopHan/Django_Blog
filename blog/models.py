@@ -1,6 +1,11 @@
 from django.db import models
 
+# 첨부 파일명과 확장자 아이콘 나타낼떄 사용(get_file_name() 함수)
+import os
+
 # Create your models here.
+
+
 
 class Post(models.Model):
     title = models.CharField(max_length=30)
@@ -20,3 +25,9 @@ class Post(models.Model):
 
     def get_absolute_url(self):
         return f'/blog/{self.pk}/'
+
+    def get_file_name(self):
+        return os.path.basename(self.file_upload.name)
+
+    def get_file_ext(self):
+        return self.get_file_name().split('.')[-1]
