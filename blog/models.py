@@ -20,7 +20,10 @@ class Post(models.Model):
     file_upload = models.FileField(upload_to = 'blog/files/%Y/%m/%d/', blank=True)
 
     # on_delete = models.CASECADE ==> 이 포스트의 작성자가 데이터 베이스에서 삭제되었을 떄 이 포스트도 같이 삭제
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    # author = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    # on_delete = models.SET_NULL ==> 데이터베이스에서 삭제되었 을 때 작성자 명을 빈칸으로 둔다.
+    author = models.ForeignKey(User,null=True, on_delete=models.SET_NULL)
 
 
     created_at = models.DateTimeField(auto_now_add=True)
