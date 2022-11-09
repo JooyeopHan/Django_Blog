@@ -1,4 +1,6 @@
 from django.test import TestCase, Client
+from django.contrib.auth.models import User
+
 from bs4 import BeautifulSoup
 from .models import Post
 
@@ -10,6 +12,9 @@ class TestView(TestCase):
 
     def setUp(self):
         self.client = Client()
+        self.user_trump = User.objects.create_user(username='trump', password = 'somepassword')
+        self.user_obama = User.objects.create_user(username='obama', password = 'somepassword')
+
 
     def navbar_test(self, soup):
         navbar = soup.nav
@@ -55,11 +60,13 @@ class TestView(TestCase):
         # 3.1 게시물이 2개 있다면
         post_001 = Post.objects.create(
             title = '첫 번 째 포스트 입니다',
-            content = 'Hello World. 첫번쨰 포스트'
+            content = 'Hello World. 첫번쨰 포스트',
+            author = self.user_trump
         )
         post_002 = Post.objects.create(
             title = '두 번 째 포스트 입니다',
-            content = '1등이 전부가 아니래요 두번째'
+            content = '1등이 전부가 아니래요 두번째',
+            author = self.user_obama
         )
         self.assertEqual(Post.objects.count(), 2)
 
@@ -75,11 +82,16 @@ class TestView(TestCase):
         # 3.4 '아직 게시물이 없습니다'라는 문구는 더 이상 보이지 않는다.
         self.assertNotIn('아직 게시물이 없습니다', main_area.text)
 
+        # 3.5 main_area 에 trump와 obama가 있는지
+        self.assertIn(self.user_trump.username.upper(), main_area.text)
+        self.assertIn(self.user_obama.username.upper(), main_area.text)
+
     def test_post_detail(self):
         # 1.1 포스트가 하나 있다. (왜 /blog/1/이 절대경로이지?)
         post_001 = Post.objects.create(
             title = '첫 번째 포스트 입니다',
             content='Hello World. 첫번쨰 포스트,detail',
+            author = self.user_trump
        )
 
         # 1.2 그 포스트의 url은 '/blog/1/' 이다.
@@ -106,7 +118,7 @@ class TestView(TestCase):
         self.assertIn(post_001.title, post_area.text)
 
         # 2.5 첫 번째 포스트의 작성자가 포스트 영역에 있다.(아직 구현 x)
-        # 아직 작성 불가
+        self.assertIn(self.user_trump.username.upper(), post_area.text)
 
         # 2.6 첫 번째 포스트의 내용(content)이 포스트 영역에 있다.
         self.assertIn(post_001.content, post_area.text)
