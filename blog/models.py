@@ -8,7 +8,15 @@ import os
 
 # Create your models here.
 
+class Category(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+    slug = models.SlugField(max_length=200, unique=True, allow_unicode=True)
 
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name_plural = 'Categories'
 
 class Post(models.Model):
     title = models.CharField(max_length=30)
@@ -25,6 +33,7 @@ class Post(models.Model):
     # on_delete = models.SET_NULL ==> 데이터베이스에서 삭제되었 을 때 작성자 명을 빈칸으로 둔다.
     author = models.ForeignKey(User,null=True, on_delete=models.SET_NULL)
 
+    category = models.ForeignKey(Category, null=True, blank=True, on_delete=models.SET_NULL)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
