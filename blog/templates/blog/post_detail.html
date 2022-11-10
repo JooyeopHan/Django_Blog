@@ -7,6 +7,12 @@
 
 {% block main_area %}
     <div id = "post-area">
+        {% if post.category %}
+            <span class="badge badge-secondary float-right">{{post.category}}</span>
+        {% else  %}
+            <span class="badge badge-secondary float-right">미분류</span>
+        {% endif %}
+
         <!-- Post title-->
         <h1 class="mt-4">{{post.title}}</h1>
         <!-- Post Author-->
@@ -22,12 +28,6 @@
         <hr>
 
 
-        <!-- Post categories-->
-        <a class="badge bg-secondary text-decoration-none link-light" href="#!">Web Design</a>
-        <a class="badge bg-secondary text-decoration-none link-light" href="#!">Freebies</a>
-
-
-
         <!-- Preview image figure-->
         <figure class="mb-4">
             {% if post.head_image %}
@@ -37,6 +37,17 @@
 
             {%endif%}
         </figure>
+
+
+         <!-- Post categories-->
+        {% if post.category %}
+            <span class="badge badge-secondary float-right">{{post.category}}</span>
+        {% else  %}
+            <span class="badge badge-secondary float-right">미분류</span>
+        {% endif %}
+        <a class="badge bg-secondary text-decoration-none link-light" href="#!">Freebies</a>
+
+
 
         <!-- Post content-->
         <p>{{post.content}}</p>

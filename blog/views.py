@@ -25,6 +25,14 @@ class PostList(ListView):
 class PostDetail(DetailView):
     model = Post
 
+    def get_context_data(self, **kwargs):
+        context = super(PostDetail, self).get_context_data()
+        context['categories'] = Category.objects.all()
+        # 카테고리가 지정되지 않은 포스트의 개수를 세라
+        context['no_category_post_count'] = Post.objects.filter(category = None).count()
+
+        return context
+
 
 ## FBV 방식
 # def index(request):

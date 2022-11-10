@@ -130,19 +130,13 @@ class TestView(TestCase):
         self.assertIn('아직 게시물이 없습니다', main_area.text)
 
     def test_post_detail(self):
-        # 1.1 포스트가 하나 있다. (왜 /blog/1/이 절대경로이지?)
-        post_001 = Post.objects.create(
-            title = '첫 번째 포스트 입니다',
-            content='Hello World. 첫번쨰 포스트,detail',
-            author = self.user_trump
-       )
 
         # 1.2 그 포스트의 url은 '/blog/1/' 이다.
-        self.assertEqual(post_001.get_absolute_url(), '/blog/1/')
+        self.assertEqual(self.post_001.get_absolute_url(), '/blog/1/')
 
         # 2. 첫 번째 포스트의 상세 페이지 테스트
         # 2.1 첫 번째 포스트의 url로 접근하면 정상적으로 작동한다(status code: 200)
-        response = self.client.get(post_001.get_absolute_url())
+        response = self.client.get(self.post_001.get_absolute_url())
         self.assertEqual(response.status_code, 200)
         soup = BeautifulSoup(response.content, 'html.parser')
 
@@ -151,17 +145,20 @@ class TestView(TestCase):
         # self.assertIn('Blog', navbar.text)
         # self.assertIn('About Me', navbar.text)
         self.navbar_test(soup)
+        self.category_card_test(soup)
 
         # 2.3 첫 번째 포스트의 제목이 웹브라우저 탭 타이틀에 들어 있다.
-        self.assertIn(post_001.title,soup.title.text)
+        self.assertIn(self.post_001.title,soup.title.text)
 
         # 2.4 첫 번째 포스트의 제목이 포스트 영역에 있따.
         main_area = soup.find('div', id='main-area')
         post_area = soup.find('div', id ='post-area')
-        self.assertIn(post_001.title, post_area.text)
+        self.assertIn(self.post_001.title, post_area.text)
+        self.assertIn(self.category_animal.name, post_area.text)
+
 
         # 2.5 첫 번째 포스트의 작성자가 포스트 영역에 있다.(아직 구현 x)
         self.assertIn(self.user_trump.username.upper(), post_area.text)
 
         # 2.6 첫 번째 포스트의 내용(content)이 포스트 영역에 있다.
-        self.assertIn(post_001.content, post_area.text)
+        self.assertIn(self.post_001.content, post_area.text)
