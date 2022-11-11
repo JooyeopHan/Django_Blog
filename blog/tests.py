@@ -2,7 +2,7 @@ from django.test import TestCase, Client
 from django.contrib.auth.models import User
 
 from bs4 import BeautifulSoup
-from .models import Post, Category
+from .models import Post, Category, Tag
 
 # Create your tests here.
 
@@ -18,23 +18,34 @@ class TestView(TestCase):
         self.category_animal = Category.objects.create(name = 'animal', slug= 'animal' )
         self.category_spongebob = Category.objects.create(name = 'spongebob', slug= 'spongebob' )
 
+        self.tag_hobby_kor = Tag.objects.create(name='취미', slug = '취미')
+        self.tag_hobby = Tag.objects.create(name='hobby', slug = 'hobby')
+        self.tag_working = Tag.objects.create(name='working', slug = 'working')
+
         self.post_001 = Post.objects.create(
             title='첫 번 째 포스트 입니다',
             content='Hello World. 첫번쨰 포스트',
             category = self.category_animal,
             author=self.user_trump
         )
+        self.post_001.tags.add(self.tag_working)
+
         self.post_002 = Post.objects.create(
             title='두 번 째 포스트 입니다',
             content='1등이 전부가 아니래요 두번째',
             category = self.category_spongebob,
             author=self.user_obama
         )
+
         self.post_003 = Post.objects.create(
             title='세 번 째 포스트 입니다.',
             content='카테고리가 없을수 도 있죠',
             author=self.user_obama
         )
+        self.post_003.tags.add(self.tag_hobby)
+        self.post_003.tags.add(self.tag_hobby_kor)
+
+
 
     def test_category_page(self):
         response = self.client.get(self.category_animal.get_absolute_url())
@@ -121,14 +132,26 @@ class TestView(TestCase):
         post_001_card = main_area.find('div', id ='post-1')
         self.assertIn(self.post_001.title, post_001_card.text)
         self.assertIn(self.post_001.category.name, post_001_card.text)
+        self.assertIn(self.post_001.author.username.upper(), post_001_card.text)
+        self.assertIn(self.tag_working.name, post_001_card.text)
+        self.assertNotIn(self.tag_hobby.name, post_001_card.text)
+        self.assertNotIn(self.tag_hobby_kor.name, post_001_card.text)
 
         post_002_card = main_area.find('div', id='post-2')
         self.assertIn(self.post_002.title, post_002_card.text)
         self.assertIn(self.post_002.category.name, post_002_card.text)
+        self.assertIn(self.post_002.author.username.upper(), post_002_card.text)
+        self.assertNotIn(self.tag_working.name, post_002_card.text)
+        self.assertNotIn(self.tag_hobby.name, post_002_card.text)
+        self.assertNotIn(self.tag_hobby_kor.name, post_002_card.text)
 
         post_003_card = main_area.find('div', id='post-3')
         self.assertIn('미분류', post_003_card.text)
         self.assertIn(self.post_003.title, post_003_card.text)
+        self.assertIn(self.post_003.author.username.upper(), post_003_card.text)
+        self.assertNotIn(self.tag_working.name, post_003_card.text)
+        self.assertIn(self.tag_hobby.name, post_003_card.text)
+        self.assertIn(self.tag_hobby_kor.name, post_003_card.text)
 
 
 
@@ -179,3 +202,7 @@ class TestView(TestCase):
 
         # 2.6 첫 번째 포스트의 내용(content)이 포스트 영역에 있다.
         self.assertIn(self.post_001.content, post_area.text)
+
+        self.assertIn(self.tag_working.name, post_area.text)
+        self.assertNotIn(self.tag_hobby.name, post_area.text)
+        self.assertNotIn(self.tag_hobby_kor.name, post_area.text)

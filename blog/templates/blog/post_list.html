@@ -7,14 +7,15 @@
         {% for p in post_list %}
         <!-- Blog Post -->
         <div class="card mb-4" id = "post-{{p.pk}}">
+
             {% if p.head_image %}
             <img class="card-img-top" src="{{p.head_image.url}}" alt="{{p}} head image">
 
             {% else %}
             <img class="card-img-top" src="https://picsum.photos/seed/{{p.id}}/900/400" alt="random_image">
 
-
             {% endif %}
+
             <div class="card-body">
                 {% if p.category %}
                     <span class = "badge badge-secondary float-right">{{p.category}}</span>
@@ -29,8 +30,20 @@
                 {% endif %}
 
                 <p class="card-text">{{p.content | truncatewords:30}}</p>
+
+                 {% if p.tags.exists %}
+                    <i class="fa-sharp fa-solid fa-hashtag"></i>
+                    {% for tag in p.tags.iterator %}
+                        <a href = "{{ tag.get_absolute_url }}"><span class="badge badge-pill badge-light">{{ tag }} </span></a>
+                    {% endfor %}
+                <br/>
+                <br/>
+                {% endif %}
+
                 <a href="{{p.get_absolute_url}}" class="btn btn-primary">Read More &rarr;</a>
             </div>
+
+
             <div class="card-footer text-muted">
                 Posted on {{p.created_at}} by
                 <a href="#">{{ p.author | upper }}</a>
