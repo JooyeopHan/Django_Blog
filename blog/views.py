@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from .models import Post, Category, Tag
 from django.views.generic import ListView, DetailView, CreateView
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 
 # Create your views here.
 
@@ -37,13 +37,17 @@ class PostDetail(DetailView):
 
         return context
 
-class PostCreate(LoginRequiredMixin, CreateView):
+class PostCreate(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     model = Post
     fields = ['title', 'hook_text', 'content', 'head_image', 'file_upload', 'category']
 
+    def test_func(self): # 이 페이지에 접근하는 사용자를 제한 하는 역할
+        return self.request.user.is_superuser or self.request.user.is_staff
+
     def form_valid(self, form):
         current_user = self.request.user # 방문자를 의미한다.
-        if current_user.is_authenticated: # 로그인 상태인지 확인 (is_authenticated : property)
+        if current_user.is_authenticated and (current_user.is_staff or current_user.is_superuser):
+            # 로그인 상태인지 확인 (is_authenticated : property)
             form.instance.author = current_user
             return super(PostCreate, self).form_valid(form)
         else: # 아니라면 redirect 함수를 사용해서 '/blog/'경로로 보내기
