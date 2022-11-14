@@ -8,6 +8,7 @@ import os
 
 # Create your models here.
 
+
 class Tag(models.Model):
     name = models.CharField(max_length=50, unique=True)
     slug = models.SlugField(max_length=200, unique=True, allow_unicode=True)
@@ -17,7 +18,6 @@ class Tag(models.Model):
 
     def get_absolute_url(self):
         return  f'/blog/tag/{self.slug}/'
-
 
 
 class Category(models.Model):

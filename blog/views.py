@@ -1,12 +1,16 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from .models import Post, Category, Tag
-from django.views.generic import ListView, DetailView
+from django.views.generic import ListView, DetailView, CreateView
+from django.contrib.auth.mixins import LoginRequiredMixin
+
 # Create your views here.
 
 ## CBV 방식
 ## ListView 클래스를 상속해서 PostList 클래스 생성
 ## 간단하게 model = post 입력 하면 됌
 ## ListView 나 클래스 View는 get_context_data()를 기본적으로 가지고 있다.
+
+
 
 class PostList(ListView):
     model = Post
@@ -32,6 +36,19 @@ class PostDetail(DetailView):
         context['no_category_post_count'] = Post.objects.filter(category = None).count()
 
         return context
+
+class PostCreate(LoginRequiredMixin, CreateView):
+    model = Post
+    fields = ['title', 'hook_text', 'content', 'head_image', 'file_upload', 'category']
+
+    def form_valid(self, form):
+        current_user = self.request.user # 방문자를 의미한다.
+        if current_user.is_authenticated: # 로그인 상태인지 확인 (is_authenticated : property)
+            form.instance.author = current_user
+            return super(PostCreate, self).form_valid(form)
+        else: # 아니라면 redirect 함수를 사용해서 '/blog/'경로로 보내기
+            return redirect('/blog/')
+
 
 
 ## FBV 방식
