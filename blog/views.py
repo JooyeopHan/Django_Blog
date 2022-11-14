@@ -1,7 +1,9 @@
 from django.shortcuts import render, redirect
 from .models import Post, Category, Tag
-from django.views.generic import ListView, DetailView, CreateView
+from django.views.generic import ListView, DetailView, CreateView, UpdateView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.core.exceptions import PermissionDenied
+
 
 # Create your views here.
 
@@ -53,8 +55,19 @@ class PostCreate(LoginRequiredMixin, UserPassesTestMixin, CreateView):
         else: # 아니라면 redirect 함수를 사용해서 '/blog/'경로로 보내기
             return redirect('/blog/')
 
+class PostUpdate(LoginRequiredMixin, UpdateView):
+    model = Post
+    fields = ['title', 'hook_text', 'content', 'head_image', 'file_upload', 'category', 'tags']
 
+    # CreateView 와 UpdateView는 모델명 뒤에 _form_html이 붙은템플릿을 기본적으로 사용
+    template_name = 'blog/post_update_form.html'
 
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated and request.user == self.get_object().author:
+            # get_object() = Post.objects.get(pk=pk)
+            return super(PostUpdate, self).dispatch(request, *args, **kwargs)
+        else:
+            raise PermissionDenied
 ## FBV 방식
 
 def category_page(request, slug):
