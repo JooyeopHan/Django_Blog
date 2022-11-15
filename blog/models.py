@@ -3,6 +3,9 @@ from django.db import models
 # 작성자 표시
 from django.contrib.auth.models import User
 
+# markdonwx
+from markdownx.models import MarkdownxField
+from markdownx.utils import markdown
 # 첨부 파일명과 확장자 아이콘 나타낼떄 사용(get_file_name() 함수)
 import os
 
@@ -38,7 +41,7 @@ class Post(models.Model):
     title = models.CharField(max_length=30)
 
     hook_text = models.CharField(max_length=100, blank=True)
-    content = models.TextField()
+    content = MarkdownxField()
 
     head_image = models.ImageField(upload_to="blog/images/%Y/%m/%d/", blank=True)
     file_upload = models.FileField(upload_to = 'blog/files/%Y/%m/%d/', blank=True)
@@ -56,7 +59,7 @@ class Post(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    # author 추후 작성 예쩡 ( 나중에 모델에서 외래키를 구현 할 때 다룰 것)
+
 
 # admin의 포스트 pk, title 노출
     def __str__(self):
@@ -70,3 +73,6 @@ class Post(models.Model):
 
     def get_file_ext(self):
         return self.get_file_name().split('.')[-1]
+
+    def get_content_markdown(self):
+        return markdown(self.content)
