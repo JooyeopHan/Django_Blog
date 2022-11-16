@@ -59,9 +59,7 @@ class Post(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-
-
-# admin의 포스트 pk, title 노출
+    # admin의 포스트 pk, title 노출
     def __str__(self):
         return f'[{self.pk}]{self.title} :: {self.author}'
 
@@ -76,3 +74,19 @@ class Post(models.Model):
 
     def get_content_markdown(self):
         return markdown(self.content)
+
+
+class Comment(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE)
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    modified_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f'{self.author}::{self.content}'
+
+    # View on site 버튼 추가하기 위해 만듬, # of #comment-{self.pk} means the ID of HTML components
+    # 다른 작업없이 모델에 get_absolute_url 함수 추가만 해줘도 admin, comment 창에 VEIW ON SITE 버튼 활성화
+    def get_absolute_url(self):
+        return f'{self.post.get_absolute_url()}#comment-{self.pk}'

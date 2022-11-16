@@ -2,7 +2,7 @@ from django.test import TestCase, Client
 from django.contrib.auth.models import User
 
 from bs4 import BeautifulSoup
-from .models import Post, Category, Tag
+from .models import Post, Category, Tag, Comment
 
 # Create your tests here.
 
@@ -47,6 +47,12 @@ class TestView(TestCase):
         )
         self.post_003.tags.add(self.tag_hobby)
         self.post_003.tags.add(self.tag_hobby_kor)
+
+        self.comment_001 = Comment.objects.create(
+            post = self.post_001,
+            author = self.user_obama,
+            content = '첫번째 댓글'
+        )
 
     def test_update_post(self):
         update_post_url = f'/blog/update_post/{self.post_003.pk}/'
@@ -329,3 +335,9 @@ class TestView(TestCase):
         self.assertIn(self.tag_working.name, post_area.text)
         self.assertNotIn(self.tag_hobby.name, post_area.text)
         self.assertNotIn(self.tag_hobby_kor.name, post_area.text)
+
+        # comment area 체크
+        comment_area = soup.find('div', id = 'comment-area')
+        comment_001_area  = comment_area.find('div', id = 'comment-1')
+        self.assertIn(self.comment_001.author.username, comment_001_area.text)
+        self.assertIn(self.comment_001.content, comment_001_area.text)
