@@ -54,6 +54,64 @@ class TestView(TestCase):
             content = '첫번째 댓글'
         )
 
+    def test_comment_form(self):
+        # 로그인한 사람만 댓글을 달 수 있또록 허용ㅇ할 예정
+        # 상단의 작성한 코멘트가 하나인가? 그리고 포스트 1에 작성된 댓글도 하나인가?
+        self.assertEqual(Comment.objects.count(),1)
+        self.assertEqual(self.post_001.comment_set.count(),1)
+
+        # 로그인 하지 않은상태 client의 post001 url을 가져옴 (로그인 되지않아도 포스트에 접속은 가능함 댓글작성만 x)
+        response = self.client.get(self.post_001.get_absolute_url())
+        self.assertEqual(response.status_code, 200) # 정상적으로 url 접속이 허영되는지
+        soup = BeautifulSoup(response.content, 'html.parser') #post_001 url에 포함된 html content parsing
+
+        comment_area = soup.find('div', id = 'comment-area')
+        self.assertFalse(comment_area.find('form', id = 'comment-form')) # comment-form이라는 id의 form 이 없는지 확인
+
+        # 로그인을 했을 떄
+        self.client.login(username = 'obama', password= 'somepassword')
+        # 위처럼 client를 self.client.login 처리한 경우 아래의 self.client.get은 로그인 한 상태로 접속하는것을 의미
+        response = self.client.get(self.post_001.get_absolute_url()) # 로그인 하지 않았을떄와 동일하게 response 받음
+        self.assertEqual(response.status_code, 200) # 위와 동일
+        soup = BeautifulSoup(response.content, 'html.parser') #위와 동일
+
+        comment_area = soup.find('div', id = 'comment-area')
+
+        comment_form = comment_area.find('form', id = 'comment-form') # 위와 다르게 comment-form을 변수로 지정
+        self.assertTrue(comment_form.find('textarea', id = 'id_content')) # id_content라는 id의 textarea가 있는지 확인
+
+        # POST 방식으로 댓글 내용을 서보에 보낸다. 그요청 결과를 response에 담는다.
+        # 이 떄 서버에 요청하는 url이 중요하며, 곧 템플릿 수정할 때 적용
+        # follow = True의 역할 : POST로 보내는 경우 서버에 처리한 후 리다이렉트가 되는데 이떄 따라가도록 설정하는 역할을 한다.
+        response = self.client.post(
+            self.post_001.get_absolute_url() + 'new_comment/',
+            {
+                'content' : '오바마의 댓글입니다.'
+            },
+            follow=True
+
+        )
+
+        self.assertEqual(response.status_code, 200)
+        # 추가 댓글이 달려 댓글이 2개인지 확인
+        self.assertEqual(Comment.objects.count(),2)
+        self.assertEqual(self.post_001.comment_set.count(), 2)
+
+        new_comment = Comment.objects.last() # Comments object의 가장 나중에 것을 new_comment 변수에 저장
+
+        soup = BeautifulSoup(response.content, 'html.parser') # 이것도 new_comment가 달린 포스트의 상세 페이지가 리다이렉트 된다
+        self.assertIn(new_comment.post.title, soup.title.text) # 새로운 코멘트의 포스트 제목과, 포스트 상세 페이지의 제목이 일치하는지 확인
+
+        comment_area = soup.find('div', id = 'comment-area')
+        new_comment_div = comment_area.find('div', id=f'comment-{new_comment.pk}') # new comment 생성시 id는 자동생성??
+        self.assertIn('obama', new_comment_div.text) # obama 있니?
+        self.assertIn('오바마의 댓글입니다.', new_comment_div.text) # 오바마의 댓글입니다 있니?
+
+
+
+
+
+
     def test_update_post(self):
         update_post_url = f'/blog/update_post/{self.post_003.pk}/'
 

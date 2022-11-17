@@ -4,6 +4,10 @@ from django.views.generic import ListView, DetailView, CreateView, UpdateView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.exceptions import PermissionDenied
 from django.utils.text import slugify
+from .forms import CommentForm
+
+# pk가 없는경우에 오류발생시키기
+from django.shortcuts import get_object_or_404
 
 # Create your views here.
 
@@ -36,7 +40,7 @@ class PostDetail(DetailView):
         context['categories'] = Category.objects.all()
         # 카테고리가 지정되지 않은 포스트의 개수를 세라
         context['no_category_post_count'] = Post.objects.filter(category = None).count()
-
+        context['comment_form'] = CommentForm # forms.py 에서 생성하였언 CommentForm 클래스를 PostDetail에 넘겨줌
         return context
 
 class PostCreate(LoginRequiredMixin, UserPassesTestMixin, CreateView):
@@ -164,6 +168,28 @@ def tag_page(request, slug):
 
     )
 
+def new_comment(request, pk):
+    if request.user.is_authenticated:
+
+        # post = Post.objects.get(pk=pk) 을 써도되지만 해당하는 pk(포스트)가 없는경우 404 오류를 발생시키기 위함
+        post = get_object_or_404(Post,pk=pk)
+
+        if request.method == 'POST': # 요청 방식이 POST인 경우
+            # 정상적으로 폼을 작성하고 OST방식으로 서버에 요청이 들어왔다면 POST 방식으로 들어온 정보를 CommenForm형식으로 가져옴
+            comment_form = CommentForm(request.POST)
+            if comment_form.is_valid():
+                comment = comment_form.save(commit=False) # 바로저장하는 기능을 잠시 미루고 comment Insatace만 가져옴
+                # 그 외의 pk로 가져오 Post, 로그인한 사용자 정보 를 추가해서 저장
+                comment.post = post
+                comment.author = request.user
+                comment.save()
+                return redirect(comment.get_absolute_url())
+
+        else: # get 방식으로 요청할 경우 로컬/pk/new_comment로 리다이렉트 하는식으로 설정
+            return redirect(post.get_absolute_url())
+
+    else :
+        raise PermissionDenied
 
 # def index(request):
 #
