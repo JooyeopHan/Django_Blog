@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from .models import Post, Category, Tag
+from .models import Post, Category, Tag, Comment
 from django.views.generic import ListView, DetailView, CreateView, UpdateView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.exceptions import PermissionDenied
@@ -81,6 +81,7 @@ class PostCreate(LoginRequiredMixin, UserPassesTestMixin, CreateView):
 
 class PostUpdate(LoginRequiredMixin, UpdateView):
     model = Post
+    # form에서 형성될 field를 지정
     fields = ['title', 'hook_text', 'content', 'head_image', 'file_upload', 'category', 'tags']
 
     # CreateView 와 UpdateView는 모델명 뒤에 _form_html이 붙은템플릿을 기본적으로 사용
@@ -126,6 +127,40 @@ class PostUpdate(LoginRequiredMixin, UpdateView):
 
         # return super(PostCreate, self).form_valid(form)
         return response
+
+# LoginRequiredMixin : 로그인 되어 있지 않은 상대로 CommentUpdate에 POST방식으로 정보를 보내는것을 방지하기 위함
+
+class CommentUpdate(LoginRequiredMixin, UpdateView):
+    model = Comment
+    form_class = CommentForm # Form.py 에서 만들어놨던 CommentForm을 form_class로 활용
+
+    '''
+    dispath() 의 역할
+    
+    
+    dispatch()의 역할을 요약하면 request와 response 사이의 중개자 역할이라고 할 수 있다.
+     간단히 말하면 HTTP 메서드에 기반한 request를 해석하는(GET인지 POST인지) 일을 담당한다.
+
+    기본적으로 클라이언트가 url을 입력하면 URLConf를 통해 요청정보가 view에게 전달된다. 
+    클래스뷰는 as_view()를 통해 전달되는데 여기서 dispatch() 메서드가 항상 자동으로 불러진다.
+
+    이러한 dispatch의 성격때문에 궁극적으로는 특정 유형의 요청이나 인수를 필터링하거나 수정하는데에 
+    자주 사용된다. 위에서 내가 썼던 예시에서도 받은 요청으로 로그인한 사용자인지 확인 후 로그인한 
+    사용자라면 다른 페이지로 리다이렉션 되도록 하였다.
+    '''
+
+    # 방문자가 <edit>버튼을 클릭해서 페이지로 접근했다면 GET방식으로 pk=1인 comment의 내용이 폼에 채워진 상태의 페이지가 나타난다.
+    # 이페이지에서 <submit>을 클릭하면 /blog/update_comment/1/경로로 POST방식을 사용해 폼의 내용을 전달하고 처리하게 되어있따
+    # 문제는 다른 사용자가 로그인한 상태에서 동일한 url을 입력하면 본인이 아닌데 수정이 가능하다
+    # 이런 상황을 방지하기위해 dipatch() 메서드에서 GET방식인지 POST방식인지를 판단하기에 앞서 댓글 작성자와 로그인한 사용자가 다른경오 퍼미션 디나이드오류가 발생하도록 설정
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated and request.user == self.get_object().author:
+            # get_object() = Post.objects.get(pk=pk)
+            return super(CommentUpdate, self).dispatch(request, *args, **kwargs)
+        else:
+            raise PermissionDenied
+
 
 
 ## FBV 방식
@@ -176,7 +211,7 @@ def new_comment(request, pk):
 
         if request.method == 'POST': # 요청 방식이 POST인 경우
             # 정상적으로 폼을 작성하고 OST방식으로 서버에 요청이 들어왔다면 POST 방식으로 들어온 정보를 CommenForm형식으로 가져옴
-            comment_form = CommentForm(request.POST)
+            comment_form = CommentForm(request.POST) # form.py에 작성하였떤 CommentForm 이용
             if comment_form.is_valid():
                 comment = comment_form.save(commit=False) # 바로저장하는 기능을 잠시 미루고 comment Insatace만 가져옴
                 # 그 외의 pk로 가져오 Post, 로그인한 사용자 정보 를 추가해서 저장

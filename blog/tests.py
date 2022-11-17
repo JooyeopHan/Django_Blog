@@ -54,8 +54,75 @@ class TestView(TestCase):
             content = '첫번째 댓글'
         )
 
+    def test_comment_update(self):
+        comment_by_trump =  Comment.objects.create(
+            post = self.post_001,
+            author = self.user_trump,
+            content = '트럼프의 댓글입니다.'
+        )
+
+        response = self.client.get(self.post_001.get_absolute_url())
+        self.assertEqual(response.status_code, 200)
+        soup = BeautifulSoup(response.content, 'html.parser')
+
+        # 댓글영역 수정에 버튼이 보이지 않아야 함 (id는 comment-해당 코멘트의 pk-update-btn 으로 지정할 예정)
+        comment_area = soup.find('div', id = 'comment-area')
+        self.assertFalse(comment_area.find('a', id='comment-1-update-btn'))
+        self.assertFalse(comment_area.find('a', id='comment-2-update-btn'))
+
+        ## 로그인한 상태 테스트
+        self.client.login(username = 'obama', password= 'somepassword')
+        response = self.client.get(self.post_001.get_absolute_url())
+        self.assertEqual(response.status_code, 200)
+        soup = BeautifulSoup(response.content, 'html.parser')
+
+        comment_area = soup.find('div', id = 'comment-area')
+        self.assertFalse(comment_area.find('a', id = 'comment-2-update-btn')) # Trump가 작성한 comment는 보이지 않아야함
+        comment_001_update_btn = comment_area.find('a', id = 'comment-1-update-btn')
+        self.assertIn('edit', comment_001_update_btn.text)
+        # 버튼의 링크 속성이 잘 들어가 있는 지 확인
+        self.assertEqual(comment_001_update_btn.attrs['href'], '/blog/update_comment/1/')
+
+        response = self.client.get('/blog/update_comment/1/')
+        self.assertEqual(response.status_code, 200)
+        soup = BeautifulSoup(response.content, 'html.parser')
+
+        self.assertEqual('Edit Comment - Blog', soup.title.text)
+        update_comment_form = soup.find('form', id = 'comment-form')
+        content_textarea = update_comment_form.find('textarea', id = 'id_content')
+
+        #업데이트시의 수정하기전의 내용이 담겨있어야 한다.
+        self.assertIn(self.comment_001.content, content_textarea.text)
+
+        # 이폼의 content 내용을 수정하고 <submit>버튼을 누를시 해당 댓글이 수정되며 이부분을 self.client.post로 구현.
+        # 이 요청을 통해 CommentUpdate클래스에서 내용이 처리된 이후에 해당 comment의 절대 경로로 리다이렉트 된다.
+        # follow = True : 해당 comment의 절대 경로 리다이렉트 허용
+        response = self.client.post(
+            f'/blog/update_comment/{self.comment_001.pk}/',
+            {
+                'content': "오바마의 댓글을 수정합니다.",
+            },
+            follow = True
+        )
+        # 포스트 행위가 정상적으로 실행이 됐다
+        self.assertEqual(response.status_code, 200)
+
+        soup = BeautifulSoup(response.content, 'html.parser')
+        comment_001_div = soup.find('div', id = 'comment-1')
+
+        #수정된 댓글을 수정된 내용으로 바뀌어 있어야하고, 수정되었을 떄 댓글에 Updated: 라는 문구가 나와야한다.
+        self.assertIn('오바마의 댓글을 수정합니다.', comment_001_div.text)
+        self.assertIn('Updated: ', comment_001_div.text)
+
+
+
+
+
+
+
+
     def test_comment_form(self):
-        # 로그인한 사람만 댓글을 달 수 있또록 허용ㅇ할 예정
+        # 로그인한 사람만 댓글을 달 수 있또록 허용 할 예정
         # 상단의 작성한 코멘트가 하나인가? 그리고 포스트 1에 작성된 댓글도 하나인가?
         self.assertEqual(Comment.objects.count(),1)
         self.assertEqual(self.post_001.comment_set.count(),1)
@@ -103,7 +170,7 @@ class TestView(TestCase):
         self.assertIn(new_comment.post.title, soup.title.text) # 새로운 코멘트의 포스트 제목과, 포스트 상세 페이지의 제목이 일치하는지 확인
 
         comment_area = soup.find('div', id = 'comment-area')
-        new_comment_div = comment_area.find('div', id=f'comment-{new_comment.pk}') # new comment 생성시 id는 자동생성??
+        new_comment_div = comment_area.find('div', id=f'comment-{new_comment.pk}') # new comment 생성시 id는 자동생성 (post-datail에 저장해놨음)
         self.assertIn('obama', new_comment_div.text) # obama 있니?
         self.assertIn('오바마의 댓글입니다.', new_comment_div.text) # 오바마의 댓글입니다 있니?
 
