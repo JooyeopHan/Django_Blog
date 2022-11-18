@@ -226,6 +226,17 @@ def new_comment(request, pk):
     else :
         raise PermissionDenied
 
+# pk 값을 가진 댓글을 쿼리셋을 받기 위해 pk를 인자값으로 넣음
+def delete_comment(request, pk):
+    comment = get_object_or_404(Comment, pk=pk) # 해당 pk에 해당하는 댓글이 없다면 오류발생
+    post = comment.post # 댓글이 달려있는 포스트 저장 (리다이렉트용)
+    if request.user.is_authenticated and request.user == comment.author:
+        comment.delete()
+        return redirect(post.get_absolute_url())
+    else: # 권한 없을시 접근 불가
+        raise PermissionDenied
+
+
 # def index(request):
 #
 #     posts = Post.objects.all().order_by('-pk')
