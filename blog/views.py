@@ -9,6 +9,9 @@ from .forms import CommentForm
 # pk가 없는경우에 오류발생시키기
 from django.shortcuts import get_object_or_404
 
+# Search 기능 적용
+from django.db.models import Q
+
 # Create your views here.
 
 ## CBV 방식
@@ -163,6 +166,33 @@ class CommentUpdate(LoginRequiredMixin, UpdateView):
         else:
             raise PermissionDenied
 
+# PostSearch는 검색결과에 해당하는 Post만을 보여주면 되므로 PostList와 매우 유사 (그래서 그냥 PostList를 상속받아 이용)
+class PostSearch(PostList):
+    paginate_by = None # 검색결과를 다 보여주기 위함
+
+    # get_queryset : Listveiw는 기본적으로 get_queryset()메서드를 제공. 이메서드는 model로 지정된 요소의
+    #                전체를 가져오는 역할을 한다.
+    #                model = Post로 지정되어 있으면 이 메서드의 결과값은 Post.objects.all()과 동일
+    #                여기서는 검색된 결과값만을 가져와야 하므로 get_queryset()을 오버라이딩을한다.
+    def get_queryset(self):
+        q = self.kwargs['q'] # URL을 통해 넘어온 검색어를 받아 q라는 변수에 저장한다.
+
+        # Q : get과 filter를 대신해서 여러 쿼리를 동시에 써야할떄 적용 (장고에서 제공)
+        # __ 는 .과 동일하나 쿼리조건에서는 __를 사용하는것으로 약속되어있음
+        # distinct() : 중복으로 가져온 요소를 제거하기 위함
+        post_list = Post.objects.filter(
+            Q(title__contains=q) | Q(tags__name__contains =q)
+        ).distinct()
+        return post_list
+
+    # 포스트 리스트에서 작성했던 내용이지만, 템플렛으로 몇가지 인자를 추가하기 위해 오버라이딩
+    # 테스트 코드에서 '파이썬'으로 검색하면 main_area에 'Search:파이썬 (2)'가 포함되어 있어야 하기에 이를 추가
+    def get_context_data(self, **kwargs):
+        context = super(PostSearch, self).get_context_data()
+        q = self.kwargs['q']
+        context['search_info'] = f'Search: {q} ({self.get_queryset().count()})'
+
+        return context
 
 
 ## FBV 방식
