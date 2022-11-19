@@ -90,3 +90,14 @@ class Comment(models.Model):
     # 다른 작업없이 모델에 get_absolute_url 함수 추가만 해줘도 admin, comment 창에 VEIW ON SITE 버튼 활성화
     def get_absolute_url(self):
         return f'{self.post.get_absolute_url()}#comment-{self.pk}'
+
+    # django-allauth를 이용해 소셜 로그인을 한 경우 그 소셜 로그인 계정의 아바타URL을 가지고 옴
+    # 그렇지 않은 경우에 placehold.it 을 이용해 원래 있던 회색 이미지를 사용
+    def get_avatar_url(self):
+        if self.author.socialaccount_set.exists():
+            return self.author.socialaccount_set.first().get_avatar_url()
+        else:
+            # DiceBear Avatar도 16bit 아바타 제공함
+            return f'https://doitdjango.com/avatar/id/1337/0dc04b2df5a4e39d/svg/guest@email.com'
+
+
