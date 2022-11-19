@@ -21,6 +21,8 @@ from django.shortcuts import get_object_or_404
 class PostList(ListView):
     model = Post
     ordering = '-pk' # pk 내림차순
+    paginate_by = 5 # 5 page씩 보여줌
+
     #이름 바꾸는방법 (그냥 index.html을 post_list.html로 바꾸는걸로)
     # template_name = 'blog/post_list.html'
 
@@ -235,7 +237,11 @@ def delete_comment(request, pk):
         return redirect(post.get_absolute_url())
     else: # 권한 없을시 접근 불가
         raise PermissionDenied
-
+'''
+DeleteView는 장고에서도 역시 제공
+그러나, 이걸 사용하기되면 기본으로 정말로 삭제할것인지 확인하는 메세지가 표시되므로
+그런 삭제를 위한 페이지로 이동했다가 돌아오는 방식이 아닌 해당페이지에 그대로 머무르면서 모달을 확인하는 방식으로 처리
+'''
 
 # def index(request):
 #
