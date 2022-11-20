@@ -75,6 +75,13 @@ class Post(models.Model):
     def get_content_markdown(self):
         return markdown(self.content)
 
+    def get_avatar_url(self):
+        if self.author.socialaccount_set.exists():
+            return self.author.socialaccount_set.first().get_avatar_url()
+        else:
+            # DiceBear Avatar도 16bit 아바타 제공함
+            return f'https://doitdjango.com/avatar/id/1337/0dc04b2df5a4e39d/svg/guest@email.com'
+
 
 class Comment(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
