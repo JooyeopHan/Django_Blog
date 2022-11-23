@@ -10,3 +10,17 @@ services:
       - 8000:8000
     env_file:
       - ./.env.dev
+    depends_on: # web 컨테이너는 db컨테이너가 실행된 이후에 시작해야 한다는 의미로 dpends_on 사용
+      - db
+
+  db:
+    image: postgres:12.0-alpine # db라는 이름의 컨테이너는 postgress를 실행시키위해 만든것
+    # postgres:12.0-alpine은 도커에서 공식으로 제공하는 이미지
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment: # PostgreSQL을 사용하기 위해 사용자명, 암호, 데이터베이스명을 지정한다.(개발용 데이터베이스)
+      - POSTGRES_USER=do_it_django_db_user
+      - POSTGRES_PASSWORD=do_it_django_db_password
+      - POSTGRES_DB=do_it_django_dev
+volumes: # volumes를 설정해서 컨테이너 실행이 중단되더라도 데이터베이스의 내용이 사라지지않도록 한다.
+  postgres_data:
