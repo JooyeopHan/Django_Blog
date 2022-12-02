@@ -12,11 +12,14 @@ services:
       - web
   web:
     build: .
+#    command: python manage.py runserver 0.0.0.0:8000
     command: gunicorn web_project.wsgi:application --bind 0.0.0.0:8000
     volumes:
       - static_volume:/usr/src/app/_static
       - media_volume:/usr/src/app/_media
       - ./:/usr/src/app/
+#    ports:
+#      - 8000:8000
     expose:
       - 8000
     env_file:

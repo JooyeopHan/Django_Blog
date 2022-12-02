@@ -3,6 +3,7 @@ version: '3'
 services:
   web:
     build: .
+#    command: python manage.py runserver 0.0.0.0:8000
     command: gunicorn web_project.wsgi:application --bind 0.0.0.0:8000
     volumes:
       - ./:/usr/src/app/
@@ -18,9 +19,11 @@ services:
     # postgres:12.0-alpine은 도커에서 공식으로 제공하는 이미지
     volumes:
       - postgres_data:/var/lib/postgresql/data/
-    environment: # PostgreSQL을 사용하기 위해 사용자명, 암호, 데이터베이스명을 지정한다.(개발용 데이터베이스)
+    environment:
       - POSTGRES_USER=do_it_django_db_user
       - POSTGRES_PASSWORD=do_it_django_db_password
       - POSTGRES_DB=do_it_django_dev
+#    env_file:
+#      - ./.env.prod.db
 volumes: # volumes를 설정해서 컨테이너 실행이 중단되더라도 데이터베이스의 내용이 사라지지않도록 한다.
   postgres_data:
