@@ -1,13 +1,24 @@
 version: '3'
 
 services:
+  nginx:
+    build: ./nginx
+    volumes:
+      - static_volume:/usr/src/app/_static
+      - media_volume:/usr/src/app/_media
+    ports:
+      - 80:80
+    depends_on:
+      - web
   web:
     build: .
     command: gunicorn web_project.wsgi:application --bind 0.0.0.0:8000
     volumes:
+      - static_volume:/usr/src/app/_static
+      - media_volume:/usr/src/app/_media
       - ./:/usr/src/app/
-    ports:
-      - 8000:8000
+    expose:
+      - 8000
     env_file:
       - ./.env.prod
     depends_on: # web 컨테이너는 db컨테이너가 실행된 이후에 시작해야 한다는 의미로 dpends_on 사용
@@ -22,3 +33,5 @@ services:
       - ./.env.prod.db
 volumes: # volumes를 설정해서 컨테이너 실행이 중단되더라도 데이터베이스의 내용이 사라지지않도록 한다.
   postgres_data:
+  static_volume:
+  media_volume:
